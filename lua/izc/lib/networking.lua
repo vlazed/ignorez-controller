@@ -1,0 +1,5 @@
+util.AddNetworkString("izc_addEntity")
+util.AddNetworkString("izc_removeEntity")
+util.AddNetworkString("izc_addMaterialForEntity")
+util.AddNetworkString("izc_removeMaterialForEntity")
+util.AddNetworkString("izc_updateMaterialPropsForEntity")
