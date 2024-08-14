@@ -8,7 +8,7 @@
 
 This adds a tool and system which controls the `$ignorez` material parameter through simple vector math and conditional logic.
 
-The default predicate function is an angle check, which is hardcoded in currently. The check determines if the angle between the view-position-and-ragdoll displacement vector and the ragdoll eye vector is less than the maximum half angle of a cone, oriented to the ragdoll's eye orientation. In other words, ignorez may be toggled depending on if you are in front of or behind the ragdoll.
+The default predicate function is an angle check, which is hardcoded in currently. The check determines if the angle between the view-position-and-ragdoll displacement vector and the ragdoll eye vector is less than the maximum half angle of a cone, oriented to the ragdoll's eye orientation. In other words, ignorez may be toggled depending on if you are in front of or behind the ragdoll's eyes.
 
 I might add the ability to use other predicate functions, but for the purpose of gmod animations, the angle check suffices.
 
