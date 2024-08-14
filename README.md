@@ -15,7 +15,7 @@ I might add the ability to use other predicate functions, but for the purpose of
 ## Use Cases
 
 - Render materials in front of other materials if the player is facing the ragdoll's head directly
-  - This is used to mimic rendering eyebrows and eyelashes in front of hair for anime characters.
+  - This could be used to mimic rendering eyebrows and eyelashes in front of hair for anime characters.
 - Have a use case? Feel free to suggest it [here](https://github.com/vlazed/ignorez-controller/discussions/1)
 
 ## Disclaimer
