@@ -1,6 +1,7 @@
 # IgnoreZ Controller
-
-![IgnoreZ Kleiner](media/izc-kleiner.gif "Don't believe me? Download and try it on my head!")
+<p align="center">
+  <img src="./media/izc-kleiner.gif" alt="animated">
+</p>
 
 This adds a tool and system which controls the `$ignorez` material parameter through simple vector math and conditional logic.
 
