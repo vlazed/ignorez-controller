@@ -47,11 +47,8 @@ local function setDefaultProps(props)
     }
 
     for key, defaultProp in pairs(defaultProps) do
-        if not props[key] then
-            props[key] = prop
-        end
+        if not props[key] then props[key] = prop end
     end
-
     return props
 end
 
@@ -60,7 +57,6 @@ function updateProps(oldProps, targetProps)
     for key, targetProp in pairs(targetProps) do
         newProps[key] = targetProp
     end
-
     return newProps
 end
 
@@ -73,7 +69,6 @@ function readMaterialInfo()
     local useEyeAngle = net.ReadBool()
     local boneId = net.ReadUInt(8)
     local angleOffset = net.ReadAngle()
-
     return {
         entIndex = entIndex,
         name = materialName,
@@ -123,5 +118,4 @@ function createServerMaterial(materialName, props)
         end
     end
 end
-
 return ENTITY_BIT_COUNT

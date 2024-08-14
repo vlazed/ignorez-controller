@@ -12,7 +12,6 @@ function ipairs_sparse(t)
     table.sort(tmpIndex)
     local j = 1
     -- get index value
-
     return function()
         local i = tmpIndex[j]
         j = j + 1

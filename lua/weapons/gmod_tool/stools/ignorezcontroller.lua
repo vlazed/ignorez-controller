@@ -20,7 +20,6 @@ function TOOL:Think()
         lastSelectedEntity = self:GetControlledEntity()
         lastSelectedEntityValid = IsValid(lastSelectedEntity)
         self:RebuildControlPanel(self:GetControlledEntity())
-
         return
     end
 end
@@ -30,17 +29,13 @@ function TOOL:LeftClick(tr)
     local ent = tr.Entity
     local isEntity = ent and IsValid(ent)
     if not isEntity then return end
-    if SERVER then
-        self:SetControlledEntity(ent)
-    end
-
+    if SERVER then self:SetControlledEntity(ent) end
     return true
 end
 
 -- Stop editing the entity
 function TOOL:RightClick(tr)
     self:SetControlledEntity(nil)
-
     return true
 end
 
@@ -54,7 +49,6 @@ local function materialList(panel, materials)
     end
 
     panel:AddItem(matList)
-
     return matList
 end
 
@@ -62,19 +56,12 @@ local function boneComboBox(panel, entity)
     local boneBox = panel:ComboBox("Bones")
     local headIndex
     for i = 0, entity:GetBoneCount() - 1 do
-        if string.find(entity:GetBoneName(i):lower(), "head") then
-            headIndex = i + 1
-        end
-
+        if string.find(entity:GetBoneName(i):lower(), "head") then headIndex = i + 1 end
         boneBox:AddChoice(entity:GetBoneName(i), i)
     end
 
-    if headIndex then
-        boneBox:ChooseOptionID(headIndex)
-    end
-
+    if headIndex then boneBox:ChooseOptionID(headIndex) end
     boneBox:Dock(BOTTOM)
-
     return boneBox
 end
 
@@ -85,10 +72,7 @@ local function getMaterialProps(entity, materialName)
 end
 
 function TOOL.BuildCPanel(panel, entity)
-    if not IsValid(entity) then
-        panel:Help("No entity selected")
-    end
-
+    if not IsValid(entity) then panel:Help("No entity selected") end
     -- TODO: Add angle offset
     local settingProps = false
     local materials = entity:GetMaterials()
@@ -131,17 +115,13 @@ function TOOL.BuildCPanel(panel, entity)
         local materialName = matList:GetSelected()[1]:GetValue(1)
         local _, boneId = boneBox:GetSelected()
         net.Start("izc_addMaterialForEntity")
-        writeMaterialInfo(
-            entity:EntIndex(),
-            materialName,
-            {
-                maxLookAngle = maxLookAngle:GetValue(),
-                inverted = inverted:GetChecked(),
-                useEyeAngle = useEyeAngle:GetChecked(),
-                boneId = boneId,
-                angleOffset = angle_zero
-            }
-        )
+        writeMaterialInfo(entity:EntIndex(), materialName, {
+            maxLookAngle = maxLookAngle:GetValue(),
+            inverted = inverted:GetChecked(),
+            useEyeAngle = useEyeAngle:GetChecked(),
+            boneId = boneId,
+            angleOffset = angle_zero
+        })
 
         net.SendToServer()
     end
@@ -151,17 +131,13 @@ function TOOL.BuildCPanel(panel, entity)
         local _, boneId = boneBox:GetSelected()
         -- TODO: Only send what updated, rather than the entire prop table
         net.Start("izc_updateMaterialPropsForEntity")
-        writeMaterialInfo(
-            entity:EntIndex(),
-            materialName,
-            {
-                maxLookAngle = maxLookAngle:GetValue(),
-                inverted = inverted:GetChecked(),
-                useEyeAngle = useEyeAngle:GetChecked(),
-                boneId = boneId,
-                angleOffset = angle_zero
-            }
-        )
+        writeMaterialInfo(entity:EntIndex(), materialName, {
+            maxLookAngle = maxLookAngle:GetValue(),
+            inverted = inverted:GetChecked(),
+            useEyeAngle = useEyeAngle:GetChecked(),
+            boneId = boneId,
+            angleOffset = angle_zero
+        })
 
         net.SendToServer()
     end

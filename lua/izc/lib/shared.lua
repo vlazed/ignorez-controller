@@ -45,10 +45,7 @@ function addMaterialForEntity()
             material = createClientMaterial(materialInfo.name, materialInfo.props)
         end
 
-        if not material then
-            error(string.format("%s is not a valid material", materialInfo.name))
-        end
-
+        if not material then error(string.format("%s is not a valid material", materialInfo.name)) end
         table.insert(targetEntity.izc_materials, material)
         targetEntity.izc_materialSet[materialInfo.name] = true
         print(string.format("%s: added %s", targetEntity:GetModel(), materialInfo.name))
@@ -69,9 +66,7 @@ function updateMaterialPropsForEntity()
     if not newMatInfo then return end
     local targetEntity = ents.GetByIndex(newMatInfo.entIndex)
     for _, matInfo in ipairs(targetEntity.izc_materials) do
-        if matInfo.name == newMatInfo.name then
-            updateProps(matInfo.props, newMatInfo.props)
-        end
+        if matInfo.name == newMatInfo.name then updateProps(matInfo.props, newMatInfo.props) end
     end
 
     print(string.format("%s: updated %s", targetEntity:GetModel(), materialName))
