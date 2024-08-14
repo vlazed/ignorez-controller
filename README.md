@@ -2,6 +2,9 @@
 <p align="center">
   <img src="./media/izc-kleiner.gif" alt="animated">
 </p>
+<p align="center">
+  <code>ignorez 1</code> <em>when Kleiner faces me;</em> <code>ignorez 0</code> <em>when Kleiner faces away.</em>
+</p>
 
 This adds a tool and system which controls the `$ignorez` material parameter through simple vector math and conditional logic.
 
