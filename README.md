@@ -16,7 +16,7 @@ I might add the ability to use other predicate functions, but for the purpose of
 
 ## Disclaimer
 
-This tool may not work as intended for every model; by default, it expects an "eyes" attachment to the ragdoll's head, with "proper" orientation. "Proper" is roughly defined by whether the spawnlist icon of the model faces us. If there is no eyes attachment or the eyes are not properly oriented, the tool also allows users to specify a bone to perform calculations, with additional configuration to offset the forward vector orientation of the bone.
+This tool may not work as intended for every model; by default, it expects an "eyes" attachment to the ragdoll's head, with "proper" orientation. "Proper" is roughly defined by whether the spawnlist icon of the model faces us (like the HL2 models). If there is no eyes attachment or the eyes are not properly oriented, the tool also allows users to specify a bone to perform calculations, with additional configuration to offset the forward vector orientation of the bone.
 
 This tool is expected to work in **singleplayer**. I have not tested this in multiplayer, but this tool does bridge entity properties across the server and client (which material is controlled, and what are their props, per entity). File an issue if you believe there is a bug with the tool.
 
