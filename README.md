@@ -14,16 +14,18 @@ I might add the ability to use other predicate functions, but for the purpose of
 
 ## Use Cases
 
-- Render materials in front of other materials if the player is facing the ragdoll's head directly
-  - This could be used to mimic rendering eyebrows and eyelashes in front of hair for anime characters.
+- Render materials in front of other materials if the player is facing the ragdoll's head directly;
+  - This could be used to mimic rendering eyebrows and eyelashes in front of hair for cartoon characters.
 - Have a use case? Feel free to suggest it [here](https://github.com/vlazed/ignorez-controller/discussions/1)
 
-## Disclaimer
+## Assumptions
 
-This tool may not work as intended for every model; by default, it expects an "eyes" attachment to the ragdoll's head, with "proper" orientation. "Proper" is roughly defined by whether the spawnlist icon of the model faces us (like the HL2 models). If there is no eyes attachment or the eyes are not properly oriented, the tool also allows users to specify a bone to perform calculations, with additional configuration to offset the forward vector orientation of the bone.
+One expected use case of this tool is to render parts of a character in front of others: irises, eyebrows, eyelashes in front of hair, for example. Since `$ignorez` is a material parameter, the tool assumes that a character has its irises, eyebrows, and eyelashes split into different materials. Not all Source Engine characters are made this way; hence, the modeler may need to define additional materials for the characters to obtain the expected results.
+
+By default, the tool assumes an "eyes" attachment to the ragdoll's head, with "proper" orientation. "Proper" is roughly defined by whether the spawnlist icon of the model faces us (like the HL2 models). If there is no eyes attachment or the eyes are not properly oriented, the tool also allows users to specify a bone to perform calculations, with additional configuration to offset the forward vector orientation of the bone. It is up to the animator or modeler to decide on which option works for them.
 
 This tool is expected to work in **singleplayer**. I have not tested this in multiplayer, but this tool does bridge entity properties across the server and client (which material is controlled, and what are their props, per entity). File an issue if you believe there is a bug with the tool.
 
-## Acknowledgements and Credits
+## Acknowledgements
 
 - [visual3dmasks_testdemo](https://github.com/2016killer/visual3dmasks_testdemo): Reading through this repository helped ease the transition into developing a slightly more sophisticated gmod addon. Hence, this tool's code is partially inspired by the practices in the visual3dmasks repo.
