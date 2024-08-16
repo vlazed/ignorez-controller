@@ -1,6 +1,6 @@
 -- 2^10 might be an under-guesstimate of the average number of entities for a Gmod sandbox. 
 -- I don't expect there to be that many entities for Gmod animators  
-local ENTITY_BIT_COUNT = 10
+ENTITY_BIT_COUNT = 10
 --[[
     Measured from the look vector, the angle beyond which we toggle the ignorez parameter
     
