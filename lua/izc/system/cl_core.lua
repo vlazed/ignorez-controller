@@ -53,6 +53,8 @@ do
 end
 
 timer.Create("izc_system", 0.1, -1, function()
+    -- Make sure player is in the world
+    if not IsValid(pl) then return end
     local eyePos = pl:EyePos()
     local eyeLook = pl:EyeAngles():Forward()
     local viewEntity = pl:GetViewEntity()
