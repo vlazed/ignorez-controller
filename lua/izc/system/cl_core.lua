@@ -9,7 +9,7 @@ cvars.AddChangeCallback("izc_performocclusion", function(new) performOcclusion =
 local controlledEntities = {}
 local function removeControlledEntity(entIndex)
     controlledEntities[entIndex] = nil
-    print(string.format("Removed %d", entIndex))
+    -- print(string.format("Removed %d", entIndex))
 end
 
 local function addControlledEntity(entIndex)
@@ -114,11 +114,7 @@ timer.Create("izc_system", 0.1, -1, function()
         -- Filter entities if outside of PVS
         if entity:IsDormant() then continue end
         -- Filter entities if not in FOV
-        if not IsInFOV(eyePos, eyeLook, entEyePos, fovCosine) then
-            print("Not in FOV")
-            continue
-        end
-
+        if not IsInFOV(eyePos, eyeLook, entEyePos, fovCosine) then continue end
         local occluded = performOcclusion and isEntityOccluded(entity, eyePos)
         local lookVector = ((eyePos - entEyePos) * xy_proj):GetNormalized()
         local angle = deg(acos(lookVector:Dot(entLookVector)))
