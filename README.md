@@ -6,7 +6,7 @@
   <code>ignorez 1</code> <em>when Kleiner faces me;</em> <code>ignorez 0</code> <em>when Kleiner faces away.</em>
 </p>
 
-This adds a tool and system which controls the `$ignorez` material parameter through simple vector math and conditional logic.
+This adds a tool and system which controls the `$ignorez` material parameter through simple vector math and conditional logic. See how it works [here](./docs/COMPARISON.MD)
 
 The default predicate function is an angle check, which is hardcoded in currently. The check determines if the angle between the view-position-and-ragdoll displacement vector and the ragdoll eye vector is less than the maximum half angle of a cone, oriented to the ragdoll's eye orientation. In other words, ignorez may be toggled depending on if you are in front of or behind the ragdoll's eyes.
 
