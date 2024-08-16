@@ -12,6 +12,14 @@ function removeMaterialForEntity()
         end
     end
 
+    -- Revert submaterial
+    for matInd, matName in ipairs(targetEntity:GetMaterials()) do
+        if matName == materialName then
+            targetEntity:SetSubMaterial(matInd - 1)
+            break
+        end
+    end
+
     print(string.format("%s: removed %s", targetEntity:GetModel(), materialName))
     if SERVER then
         -- Replicate to all clients
