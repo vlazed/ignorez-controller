@@ -1,6 +1,6 @@
 ## Video Preview
 
-![](https://github.com/user-attachments/assets/d9520bc3-2217-42c2-ab03-d89a4ce16e0d.mp4)
+[](https://github.com/user-attachments/assets/d9520bc3-2217-42c2-ab03-d89a4ce16e0d)
 
 ## Control Panel Preview
 
