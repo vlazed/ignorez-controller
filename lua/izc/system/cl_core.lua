@@ -4,10 +4,19 @@ local cos = math.cos
 local deg = math.deg
 local rad = math.rad
 local xy_proj = Vector(1, 1, 0)
+local performOcclusion = CreateClientConVar("izc_performocclusion", "1", true, false, "Whether the IgnoreZ Controller should perform occlusion calculations", 0, 1):GetBool()
+cvars.AddChangeCallback("izc_performocclusion", function(new) performOcclusion = tobool(new) end)
 local controlledEntities = {}
-local function removeControlledEntity(entityId)
-    controlledEntities[entityId] = nil
-    print(string.format("Removed %d", entityId))
+local function removeControlledEntity(entIndex)
+    controlledEntities[entIndex] = nil
+    print(string.format("Removed %d", entIndex))
+end
+
+local function addControlledEntity(entIndex)
+    local entity = ents.GetByIndex(entIndex)
+    if not IsValid(entity) then return end
+    controlledEntities[entIndex] = entity
+    -- print(string.format("Added %d", targetEntityIndex))
 end
 
 local function booltonumber(bool)
@@ -23,10 +32,7 @@ net.Receive("izc_removeMaterialForEntity", function() removeMaterialForEntity() 
 net.Receive("izc_updateMaterialPropsForEntity", function() updateMaterialPropsForEntity() end)
 net.Receive("izc_addEntity", function()
     local targetEntityIndex = net.ReadUInt(ENTITY_BIT_COUNT)
-    if targetEntityIndex then
-        controlledEntities[targetEntityIndex] = targetEntityIndex
-        -- print(string.format("Added %d", targetEntityIndex))
-    end
+    if targetEntityIndex then addControlledEntity(targetEntityIndex) end
 end)
 
 net.Receive("izc_removeEntity", function()
@@ -43,12 +49,40 @@ do
     local VectorNormalize = VECTOR.Normalize
     local VectorDot = VECTOR.Dot
     local diff = Vector()
-    function IsInFOV(vecViewOrigin, vecViewDirection, vecPoint, flFOVCosine)
+    function IsInFOV(vecViewOrigin, vecViewDirection, vecPoint, flFOVCosine, min, max)
         VectorCopy(diff, vecPoint)
         VectorSubtract(diff, vecViewOrigin)
         VectorNormalize(diff)
         return VectorDot(vecViewDirection, diff) > flFOVCosine
     end
+end
+
+local function isEntityOccluded(entity, start)
+    local traceLine = util.TraceLine
+    local min, max = entity:GetRotatedAABB(entity:OBBMins(), entity:OBBMaxs())
+    local center = entity:GetPos() + (min + max) / 2
+    local cornersVisible = 0
+    for i = 1, 8 do
+        local v1 = (i % 2) == 0 and min or max
+        local v2 = (i % 4) < 2 and min or max
+        local v3 = i > 4 and min or max
+        local corner = Vector(v1.x, v2.y, v3.z)
+        local endPos = center + corner
+        local tr = traceLine({
+            start = start,
+            endpos = endPos,
+            filter = function(e)
+                if e == entity or e == LocalPlayer() then
+                    return false
+                else
+                    return true
+                end
+            end,
+        })
+
+        if tr.HitPos == endPos then cornersVisible = cornersVisible + 1 end
+    end
+    return cornersVisible < 2
 end
 
 timer.Create("izc_system", 0.1, -1, function()
@@ -58,34 +92,35 @@ timer.Create("izc_system", 0.1, -1, function()
     local eyePos = pl:EyePos()
     local eyeLook = pl:EyeAngles():Forward()
     local viewEntity = pl:GetViewEntity()
-    local flFOV = pl:GetFOV()
-    local flFOVCosine = cos(rad(flFOV * 0.75))
+    local fov = pl:GetFOV()
+    local fovCosine = cos(rad(fov * 0.75))
     if IsValid(viewEntity) then
         eyePos = viewEntity:EyePos()
         eyeLook = viewEntity:EyeAngles():Forward()
     end
 
-    for _, entityId in ipairs_sparse(controlledEntities) do
-        local entity = ents.GetByIndex(entityId)
+    for entIndex, entity in ipairs_sparse(controlledEntities) do
         if not IsValid(entity) then continue end
         if not entity.izc_materials then continue end
-        -- Filter entities if outside of PVS
-        if entity:IsDormant() then continue end
-        local vecOrigin = entity:GetPos()
-        -- Filter entities if not in FOV
-        if not IsInFOV(eyePos, eyeLook, vecOrigin, flFOVCosine) then continue end
-        local entLookVector = entity:EyeAngles():Forward()
         local entEyePos = entity:EyePos()
-        local lookVector = ((eyePos - entEyePos) * xy_proj):GetNormalized()
-        local angle = deg(acos(lookVector:Dot(entLookVector)))
+        local entLookVector = entity:EyeAngles():Forward()
         local eyeAttachment = entity:GetAttachment(entity:LookupAttachment("eyes"))
         if eyeAttachment then
             entEyePos = eyeAttachment.Pos
             entLookVector = eyeAttachment.Ang:Forward()
-            lookVector = (eyePos - entEyePos):GetNormalized()
-            angle = deg(acos(lookVector:Dot(entLookVector)))
         end
 
+        -- Filter entities if outside of PVS
+        if entity:IsDormant() then continue end
+        -- Filter entities if not in FOV
+        if not IsInFOV(eyePos, eyeLook, entEyePos, fovCosine) then
+            print("Not in FOV")
+            continue
+        end
+
+        local occluded = performOcclusion and isEntityOccluded(entity, eyePos)
+        local lookVector = ((eyePos - entEyePos) * xy_proj):GetNormalized()
+        local angle = deg(acos(lookVector:Dot(entLookVector)))
         -- Filter entities that don't have controlled ignorez materials
         if not entity.izc_materials then continue end
         for _, matInfo in pairs(entity.izc_materials) do
@@ -102,6 +137,7 @@ timer.Create("izc_system", 0.1, -1, function()
 
             if angle <= props.maxLookAngle then option = true end
             if props.inverted then option = not option end
+            option = option and not occluded
             -- Only set $ignorez if we are outside of the material
             if matInfo.prevOption == option then continue end
             local defaultFlags = matInfo.defaultFlags
