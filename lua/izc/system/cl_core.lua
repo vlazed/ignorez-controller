@@ -62,12 +62,13 @@ local function isEntityOccluded(entity, start)
     local min, max = entity:GetRotatedAABB(entity:OBBMins(), entity:OBBMaxs())
     local center = entity:GetPos() + (min + max) / 2
     local cornersVisible = 0
-    for i = 1, 8 do
+    for i = 1, 9 do
         local v1 = (i % 2) == 0 and min or max
         local v2 = (i % 4) < 2 and min or max
         local v3 = i > 4 and min or max
         local corner = Vector(v1.x, v2.y, v3.z)
         local endPos = center + corner
+        if i == 9 then endPos = center end
         local tr = traceLine({
             start = start,
             endpos = endPos,
