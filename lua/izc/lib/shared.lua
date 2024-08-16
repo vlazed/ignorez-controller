@@ -7,11 +7,6 @@ function removeMaterialForEntity()
     targetEntity.izc_materialSet[materialName] = nil
     for ind, matInfo in ipairs(targetEntity.izc_materials) do
         if matInfo.name == materialName then
-            if CLIENT then
-                -- Revert $ignorez to its original setting
-                matInfo.material:SetInt("$flags", matInfo.defaultFlags)
-            end
-
             table.remove(targetEntity.izc_materials, ind)
             break
         end
@@ -39,16 +34,24 @@ function addMaterialForEntity()
     if not targetEntity.izc_materialSet[materialInfo.name] then
         local material
         if SERVER then
-            material = createServerMaterial(materialInfo.name, materialInfo.props)
+            material = createServerMaterial(materialInfo.name, materialInfo.props, materialInfo.entIndex)
             table.insert(targetEntity.izc_materials, material)
         else
-            material = createClientMaterial(materialInfo.name, materialInfo.props)
+            material = createClientMaterial(materialInfo.name, materialInfo.props, materialInfo.entIndex)
         end
 
         if not material then error(string.format("%s is not a valid material", materialInfo.name)) end
         table.insert(targetEntity.izc_materials, material)
         targetEntity.izc_materialSet[materialInfo.name] = true
         print(string.format("%s: added %s", targetEntity:GetModel(), materialInfo.name))
+        if CLIENT then
+            for i, origMat in ipairs(targetEntity:GetMaterials()) do
+                if origMat == materialInfo.name then
+                    targetEntity:SetSubMaterial(i - 1, "!" .. material.material:GetName())
+                    break
+                end
+            end
+        end
     end
 
     if SERVER then
@@ -69,7 +72,7 @@ function updateMaterialPropsForEntity()
         if matInfo.name == newMatInfo.name then updateProps(matInfo.props, newMatInfo.props) end
     end
 
-    print(string.format("%s: updated %s", targetEntity:GetModel(), materialName))
+    print(string.format("%s: updated %s", targetEntity:GetModel(), newMatInfo.name))
     if SERVER then
         for _, matInfo in ipairs(targetEntity.izc_materials) do
             net.Start("izc_updateMaterialPropsForEntity")

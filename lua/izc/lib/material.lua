@@ -92,13 +92,25 @@ function writeMaterialInfo(entIndex, materialName, props)
     net.WriteAngle(props.angleOffset)
 end
 
-function createClientMaterial(materialName, props)
+local function copyTexturesTo(target, source)
+    local textures = {"$basetexture", "$bumpmap"}
+    for _, texture in ipairs(textures) do
+        target:SetTexture(texture, source:GetTexture(texture))
+    end
+end
+
+function createClientMaterial(materialName, props, entIndex)
     if CLIENT then
-        local newMaterial, _ = Material(materialName)
-        if newMaterial then
+        local baseMaterial, _ = Material(materialName)
+        if baseMaterial then
+            local newMaterialName = string.format("%s_IZC_%s", materialName, entIndex)
+            local newMaterial = CreateMaterial(newMaterialName, baseMaterial:GetShader(), baseMaterial:GetKeyValues())
+            copyTexturesTo(newMaterial, baseMaterial)
+            -- PrintTable(baseMaterial:GetKeyValues())
+            -- PrintTable(newMaterial:GetKeyValues())
             return {
                 material = newMaterial,
-                defaultFlags = newMaterial:GetInt("$flags"),
+                defaultFlags = baseMaterial:GetInt("$flags"),
                 prevOption = false,
                 name = materialName,
                 props = setDefaultProps(props)
