@@ -1,6 +1,8 @@
 print("Loading clientside izc system")
 local acos = math.acos
+local cos = math.cos
 local deg = math.deg
+local rad = math.rad
 local xy_proj = Vector(1, 1, 0)
 local pl = LocalPlayer()
 local controlledEntities = {}
@@ -33,14 +35,43 @@ net.Receive("izc_removeEntity", function()
     if targetEntityIndex then removeControlledEntity(targetEntityIndex) end
 end)
 
+-- https://github.com/noaccessl/gmod-PerformantRender/blob/master/main.lua
+local IsInFOV
+do
+    local VECTOR = FindMetaTable("Vector")
+    local VectorCopy = VECTOR.Set
+    local VectorSubtract = VECTOR.Sub
+    local VectorNormalize = VECTOR.Normalize
+    local VectorDot = VECTOR.Dot
+    local diff = Vector()
+    function IsInFOV(vecViewOrigin, vecViewDirection, vecPoint, flFOVCosine)
+        VectorCopy(diff, vecPoint)
+        VectorSubtract(diff, vecViewOrigin)
+        VectorNormalize(diff)
+        return VectorDot(vecViewDirection, diff) > flFOVCosine
+    end
+end
+
 timer.Create("izc_system", 0.1, -1, function()
     local eyePos = pl:EyePos()
+    local eyeLook = pl:EyeAngles():Forward()
     local viewEntity = pl:GetViewEntity()
-    if IsValid(viewEntity) then eyePos = viewEntity:EyePos() end
+    local flFOV = pl:GetFOV()
+    local flFOVCosine = cos(rad(flFOV * 0.75))
+    if IsValid(viewEntity) then
+        eyePos = viewEntity:EyePos()
+        eyeLook = viewEntity:EyeAngles():Forward()
+    end
+
     for _, entityId in ipairs_sparse(controlledEntities) do
         local entity = ents.GetByIndex(entityId)
         if not IsValid(entity) then continue end
         if not entity.izc_materials then continue end
+        -- Filter entities if outside of PVS
+        if entity:IsDormant() then continue end
+        local vecOrigin = entity:GetPos()
+        -- Filter entities if not in FOV
+        if not IsInFOV(eyePos, eyeLook, vecOrigin, flFOVCosine) then continue end
         local entLookVector = entity:EyeAngles():Forward()
         local entEyePos = entity:EyePos()
         local lookVector = ((eyePos - entEyePos) * xy_proj):GetNormalized()
@@ -53,6 +84,7 @@ timer.Create("izc_system", 0.1, -1, function()
             angle = deg(acos(lookVector:Dot(entLookVector)))
         end
 
+        -- Filter entities that don't have controlled ignorez materials
         if not entity.izc_materials then continue end
         for _, matInfo in pairs(entity.izc_materials) do
             local option = false
