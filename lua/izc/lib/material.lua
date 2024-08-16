@@ -115,13 +115,18 @@ end
 
 function createClientMaterial(materialName, props, entIndex)
     if CLIENT then
+        -- local translucentFlag = 2097152
         local baseMaterial, _ = Material(materialName)
         if baseMaterial then
             local baseFlags = baseMaterial:GetInt("$flags")
+            -- local baseFlags2 = baseMaterial:GetInt("$flags2")
             local newMaterialName = string.format("%s_IZC_%s", materialName, entIndex)
             local newMaterial = CreateMaterial(newMaterialName, baseMaterial:GetShader(), baseMaterial:GetKeyValues())
             copyTexturesTo(newMaterial, baseMaterial)
             newMaterial:SetInt("$flags", baseFlags)
+            -- newMaterial:SetInt("$flags2", baseFlags2)
+            -- newMaterial:SetMatrix("$phongfresnelranges", baseMaterial:GetMatrix("$phongfresnelranges"))
+            -- newMaterial:SetMatrix("$phongtint", baseMaterial:GetMatrix("$phongtint"))
             return {
                 material = newMaterial,
                 defaultFlags = baseMaterial:GetInt("$flags"),
