@@ -102,16 +102,16 @@ timer.Create("izc_system", 0.1, -1, function()
             if props.inverted then option = not option end
             -- Only set $ignorez if we are outside of the material
             if matInfo.prevOption == option then continue end
-            local currentFlags = matInfo.defaultFlags
+            local defaultFlags = matInfo.defaultFlags
             local ignoreZFlag = 32768
             -- Bit flags are the intended method for setting ignorez for VertexLitGeneric; we cannot
             -- set it directly by 'matInfo.material:SetInt("$ignorez", booltonumber(option))'
-            if bit.band(ignoreZFlag, currentFlags) == ignoreZFlag then
+            if bit.band(ignoreZFlag, defaultFlags) == ignoreZFlag then
                 -- The material has $ignorez turned on by default
-                matInfo.material:SetInt("$flags", currentFlags - ignoreZFlag * booltonumber(not option))
+                matInfo.material:SetInt("$flags", defaultFlags - ignoreZFlag * booltonumber(not option))
             else
                 -- The material has $ignorez turned off by default
-                matInfo.material:SetInt("$flags", currentFlags + ignoreZFlag * booltonumber(option))
+                matInfo.material:SetInt("$flags", defaultFlags + ignoreZFlag * booltonumber(option))
             end
 
             matInfo.prevOption = option
