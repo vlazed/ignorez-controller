@@ -4,7 +4,6 @@ local cos = math.cos
 local deg = math.deg
 local rad = math.rad
 local xy_proj = Vector(1, 1, 0)
-local pl = LocalPlayer()
 local controlledEntities = {}
 local function removeControlledEntity(entityId)
     controlledEntities[entityId] = nil
@@ -53,8 +52,9 @@ do
 end
 
 timer.Create("izc_system", 0.1, -1, function()
-    -- Make sure player is in the world
+    local pl = LocalPlayer()
     if not IsValid(pl) then return end
+    -- Make sure player is in the world
     local eyePos = pl:EyePos()
     local eyeLook = pl:EyeAngles():Forward()
     local viewEntity = pl:GetViewEntity()
