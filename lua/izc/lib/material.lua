@@ -93,9 +93,23 @@ function writeMaterialInfo(entIndex, materialName, props)
 end
 
 local function copyTexturesTo(target, source)
-    local textures = {"$basetexture", "$bumpmap"}
+    -- format: multiline
+    local textures = {
+        "$basetexture",
+        "$bumpmap",
+        "$detail",
+        "$phongexponenttexture",
+        "$phongwarptexture",
+        "$envmap",
+        "$envmapmask",
+        "$lightwarptexture",
+        "$iris",
+        "$ambientoccltexture",
+        "$corneatexture"
+    }
+
     for _, texture in ipairs(textures) do
-        target:SetTexture(texture, source:GetTexture(texture))
+        if source:GetTexture(texture) then target:SetTexture(texture, source:GetTexture(texture)) end
     end
 end
 
@@ -103,11 +117,11 @@ function createClientMaterial(materialName, props, entIndex)
     if CLIENT then
         local baseMaterial, _ = Material(materialName)
         if baseMaterial then
+            local baseFlags = baseMaterial:GetInt("$flags")
             local newMaterialName = string.format("%s_IZC_%s", materialName, entIndex)
             local newMaterial = CreateMaterial(newMaterialName, baseMaterial:GetShader(), baseMaterial:GetKeyValues())
             copyTexturesTo(newMaterial, baseMaterial)
-            -- PrintTable(baseMaterial:GetKeyValues())
-            -- PrintTable(newMaterial:GetKeyValues())
+            newMaterial:SetInt("$flags", baseFlags)
             return {
                 material = newMaterial,
                 defaultFlags = baseMaterial:GetInt("$flags"),
