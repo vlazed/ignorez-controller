@@ -72,7 +72,11 @@ local function getMaterialProps(entity, materialName)
 end
 
 function TOOL.BuildCPanel(panel, entity)
-    if not IsValid(entity) then panel:Help("No entity selected") end
+    if not IsValid(entity) then
+        panel:Help("No entity selected")
+        return
+    end
+
     -- TODO: Add angle offset
     local settingProps = false
     local materials = entity:GetMaterials()
