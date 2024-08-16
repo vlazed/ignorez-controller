@@ -26,7 +26,7 @@ net.Receive("izc_addEntity", function()
     local targetEntityIndex = net.ReadUInt(ENTITY_BIT_COUNT)
     if targetEntityIndex then
         controlledEntities[targetEntityIndex] = targetEntityIndex
-        print(string.format("Added %d", targetEntityIndex))
+        -- print(string.format("Added %d", targetEntityIndex))
     end
 end)
 
