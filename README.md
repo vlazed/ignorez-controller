@@ -39,3 +39,5 @@ This tool is expected to work in **singleplayer**. I have not tested this in mul
 ## Acknowledgements
 
 - [visual3dmasks_testdemo](https://github.com/2016killer/visual3dmasks_testdemo): Reading through this repository helped ease the transition into developing a slightly more sophisticated gmod addon. Hence, this tool's code is partially inspired by the practices in the visual3dmasks repo.
+
+## [Back to Top](#ignorez-controller)
