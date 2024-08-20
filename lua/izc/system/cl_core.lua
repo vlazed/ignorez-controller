@@ -7,8 +7,10 @@ local xy_proj = Vector(1, 1, 0)
 local performOcclusion = CreateClientConVar("izc_performocclusion", "1", true, false, "Whether the IgnoreZ Controller should perform occlusion calculations", 0, 1):GetBool()
 cvars.AddChangeCallback("izc_performocclusion", function(new) performOcclusion = tobool(new) end)
 local controlledEntities = {}
+local controlledEntitiesCount = 0
 local function removeControlledEntity(entIndex)
     controlledEntities[entIndex] = nil
+    controlledEntitiesCount = controlledEntitiesCount - 1
     -- print(string.format("Removed %d", entIndex))
 end
 
@@ -16,6 +18,7 @@ local function addControlledEntity(entIndex)
     local entity = ents.GetByIndex(entIndex)
     if not IsValid(entity) then return end
     controlledEntities[entIndex] = entity
+    controlledEntitiesCount = controlledEntitiesCount + 1
     -- print(string.format("Added %d", targetEntityIndex))
 end
 
@@ -62,6 +65,7 @@ local function isEntityOccluded(entity, start)
     local min, max = entity:GetRotatedAABB(entity:OBBMins(), entity:OBBMaxs())
     local center = entity:GetPos() + (min + max) / 2
     local cornersVisible = 0
+    local maxVisible = 2
     for i = 1, 9 do
         local v1 = (i % 2) == 0 and min or max
         local v2 = (i % 4) < 2 and min or max
@@ -82,11 +86,13 @@ local function isEntityOccluded(entity, start)
         })
 
         if tr.HitPos == endPos then cornersVisible = cornersVisible + 1 end
+        if cornersVisible >= maxVisible then return false end
     end
-    return cornersVisible < 2
+    return true
 end
 
 timer.Create("izc_system", 0.1, -1, function()
+    if controlledEntitiesCount <= 0 then return end
     local pl = LocalPlayer()
     if not IsValid(pl) then return end
     -- Make sure player is in the world
