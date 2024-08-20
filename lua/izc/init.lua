@@ -4,6 +4,10 @@ if SERVER then
     include("izc/lib/material.lua")
     include("izc/lib/shared.lua")
     include("izc/system/core.lua")
+    AddCSLuaFile("izc/lib/util.lua")
+    AddCSLuaFile("izc/lib/material.lua")
+    AddCSLuaFile("izc/lib/shared.lua")
+    AddCSLuaFile("izc/system/cl_core.lua")
 else
     print("Initializing izc on the client")
     include("izc/lib/util.lua")

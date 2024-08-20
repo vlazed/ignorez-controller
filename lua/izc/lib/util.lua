@@ -1,3 +1,4 @@
+-- https://subscription.packtpub.com/book/game-development/9781849515504/1/ch01lvl1sec14/extending-ipairs-for-use-in-sparse-arrays
 function ipairs_sparse(t)
     -- tmpIndex will hold sorted indices, otherwise
     -- this iterator would be no different from pairs iterator
