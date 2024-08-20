@@ -44,7 +44,6 @@ net.Receive("izc_removeEntity", function()
     if targetEntityIndex then removeControlledEntity(targetEntityIndex) end
 end)
 
--- https://github.com/noaccessl/gmod-PerformantRender/blob/master/main.lua
 local IsInFOV
 local isEntityOccluded
 do
@@ -54,6 +53,7 @@ do
     local VectorNormalize = VECTOR.Normalize
     local VectorDot = VECTOR.Dot
     local diff = Vector()
+    -- https://github.com/noaccessl/gmod-PerformantRender/blob/master/main.lua
     function IsInFOV(vecViewOrigin, vecViewDirection, vecPoint, flFOVCosine, min, max)
         VectorCopy(diff, vecPoint)
         VectorSubtract(diff, vecViewOrigin)
