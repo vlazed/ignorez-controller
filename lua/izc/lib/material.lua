@@ -1,152 +1,151 @@
--- 2^10 might be an under-guesstimate of the average number of entities for a Gmod sandbox. 
--- I don't expect there to be that many entities for Gmod animators  
-ENTITY_BIT_COUNT = 10
---[[
-    Measured from the look vector, the angle beyond which we toggle the ignorez parameter
-    
-    If this is set to +/-180 degrees and above (or below), we do not control anything, and
-    we skip dot product calculations.
---]]
-local MAX_LOOK_ANGLE = 115
---[[
-    Whether we switch the ignorez parameter
+---@module "izc.lib.constants"
+local IZCConstants = include("izc/lib/constants.lua")
 
-    We give the option for users to switch the see-through behavior of materials if a predicate 
-    is true 
---]]
-local IS_INVERTED = false
--- TODO: Test if Entity:SetEyeTarget() changes Entity:EyeAngles()
---[[
-    Whether we should use a ragdoll's eye angles (hopefully not changed eyetarget)
+local ENTITY_BIT_COUNT = IZCConstants.ENTITY_BIT_COUNT
 
-    By default, we use the world look vector obtained from Entity:EyeAngles as we assume proper 
-    eye orientation for the given ragdoll If this is false, the user can specify their reference 
-    heading with respect to a specific bone angle (on or offset by some degrees)
---]]
-local USE_EYE_ANGLE = true
---[[
-    The name of the bone to use for reference heading if USE_EYE_ANGLE is false
+---@class IZCProps
+---@field maxLookAngle number?
+---@field inverted boolean?
+---@field useEyeAngle boolean?
+---@field boneId integer?
+---@field angleOffset Angle?
 
-    The default id is arbitrary. The CPanel frontend automatically replaces this value with
-    a valid bone id corresponding to the ragdoll's head. 
-    
-    The frontend may be used to change the bone for dot product calculations
---]]
-local DEFAULT_BONE_ID = 1
---[[
-    The offset from the bone's reference heading if USE_EYE_ANGLE is false
---]]
-local DEFAULT_ANGLE_OFFSET = angle_zero
+---@class IZCMaterial
+---@field material Material
+---@field defaultFlags integer
+---@field prevOption boolean
+---@field name string
+---@field props IZCProps
+
+---@class IZCMaterialSingleton
+---@field ENTITY_BIT_COUNT integer
+---@field updateProps fun(oldProps: IZCProps, targetProps: IZCProps): IZCProps
+---@field readMaterialInfo fun(): IZCMaterialInfo?
+---@field writeMaterialInfo fun(entIndex: number, materialName: string, props: IZCProps): nil
+---@field createClientMaterial fun(materialName: string, props: IZCProps, entIndex: integer): IZCMaterial?
+---@field createServerMaterial fun(materialName: string, props: IZCProps): IZCMaterial?
+local IZCMaterialSingleton = {}
+
+---On initialization, use the default parameters above for new materials
+---@param props IZCProps
+---@return IZCProps
 local function setDefaultProps(props)
-    local defaultProps = {
-        maxLookAngle = MAX_LOOK_ANGLE,
-        inverted = IS_INVERTED,
-        useEyeAngle = USE_EYE_ANGLE,
-        boneId = DEFAULT_BONE_ID,
-        angleOffset = DEFAULT_ANGLE_OFFSET
-    }
+	local defaultProps = {
+		maxLookAngle = IZCConstants.MAX_LOOK_ANGLE,
+		inverted = IZCConstants.IS_INVERTED,
+		useEyeAngle = IZCConstants.USE_EYE_ANGLE,
+		boneId = IZCConstants.DEFAULT_BONE_ID,
+		angleOffset = IZCConstants.DEFAULT_ANGLE_OFFSET,
+	}
 
-    for key, defaultProp in pairs(defaultProps) do
-        if not props[key] then props[key] = prop end
-    end
-    return props
+	for key, defaultProp in pairs(defaultProps) do
+		if not props[key] then
+			props[key] = defaultProp
+		end
+	end
+	return props
 end
 
-function updateProps(oldProps, targetProps)
-    local newProps = oldProps
-    for key, targetProp in pairs(targetProps) do
-        newProps[key] = targetProp
-    end
-    return newProps
+function IZCMaterialSingleton.updateProps(oldProps, targetProps)
+	local newProps = oldProps
+	for key, targetProp in pairs(targetProps) do
+		newProps[key] = targetProp
+	end
+	return newProps
 end
 
-function readMaterialInfo()
-    local entIndex = net.ReadUInt(ENTITY_BIT_COUNT)
-    if not entIndex then return end
-    local materialName = net.ReadString()
-    local maxLookAngle = net.ReadFloat()
-    local inverted = net.ReadBool()
-    local useEyeAngle = net.ReadBool()
-    local boneId = net.ReadUInt(8)
-    local angleOffset = net.ReadAngle()
-    return {
-        entIndex = entIndex,
-        name = materialName,
-        props = {
-            maxLookAngle = maxLookAngle,
-            inverted = inverted,
-            useEyeAngle = useEyeAngle,
-            boneId = boneId,
-            angleOffset = angleOffset,
-        }
-    }
+function IZCMaterialSingleton.readMaterialInfo()
+	local entIndex = net.ReadUInt(ENTITY_BIT_COUNT)
+	if not entIndex then
+		return
+	end
+	local materialName = net.ReadString()
+	local maxLookAngle = net.ReadFloat()
+	local inverted = net.ReadBool()
+	local useEyeAngle = net.ReadBool()
+	local boneId = net.ReadUInt(8)
+	local angleOffset = net.ReadAngle()
+	return {
+		entIndex = entIndex,
+		name = materialName,
+		props = {
+			maxLookAngle = maxLookAngle,
+			inverted = inverted,
+			useEyeAngle = useEyeAngle,
+			boneId = boneId,
+			angleOffset = angleOffset,
+		},
+	}
 end
 
-function writeMaterialInfo(entIndex, materialName, props)
-    net.WriteUInt(entIndex, ENTITY_BIT_COUNT)
-    net.WriteString(materialName)
-    net.WriteFloat(props.maxLookAngle)
-    net.WriteBool(props.inverted)
-    net.WriteBool(props.useEyeAngle)
-    net.WriteUInt(props.boneId, 8)
-    net.WriteAngle(props.angleOffset)
+function IZCMaterialSingleton.writeMaterialInfo(entIndex, materialName, props)
+	net.WriteUInt(entIndex, ENTITY_BIT_COUNT)
+	net.WriteString(materialName)
+	net.WriteFloat(props.maxLookAngle)
+	net.WriteBool(props.inverted)
+	net.WriteBool(props.useEyeAngle)
+	net.WriteUInt(props.boneId, 8)
+	net.WriteAngle(props.angleOffset)
 end
 
 local function copyTexturesTo(target, source)
-    -- format: multiline
-    local textures = {
-        "$basetexture",
-        "$bumpmap",
-        "$detail",
-        "$phongexponenttexture",
-        "$phongwarptexture",
-        "$envmap",
-        "$envmapmask",
-        "$lightwarptexture",
-        "$iris",
-        "$ambientoccltexture",
-        "$corneatexture"
-    }
+	-- format: multiline
+	local textures = {
+		"$basetexture",
+		"$bumpmap",
+		"$detail",
+		"$phongexponenttexture",
+		"$phongwarptexture",
+		"$envmap",
+		"$envmapmask",
+		"$lightwarptexture",
+		"$iris",
+		"$ambientoccltexture",
+		"$corneatexture",
+	}
 
-    for _, texture in ipairs(textures) do
-        if source:GetTexture(texture) then target:SetTexture(texture, source:GetTexture(texture)) end
-    end
+	for _, texture in ipairs(textures) do
+		if source:GetTexture(texture) then
+			target:SetTexture(texture, source:GetTexture(texture))
+		end
+	end
 end
 
-function createClientMaterial(materialName, props, entIndex)
-    if CLIENT then
-        -- local translucentFlag = 2097152
-        local baseMaterial, _ = Material(materialName)
-        if baseMaterial then
-            local baseFlags = baseMaterial:GetInt("$flags")
-            -- local baseFlags2 = baseMaterial:GetInt("$flags2")
-            local newMaterialName = string.format("%s_IZC_%s", materialName, entIndex)
-            local newMaterial = CreateMaterial(newMaterialName, baseMaterial:GetShader(), baseMaterial:GetKeyValues())
-            copyTexturesTo(newMaterial, baseMaterial)
-            newMaterial:SetInt("$flags", baseFlags)
-            -- newMaterial:SetInt("$flags2", baseFlags2)
-            -- newMaterial:SetMatrix("$phongfresnelranges", baseMaterial:GetMatrix("$phongfresnelranges"))
-            -- newMaterial:SetMatrix("$phongtint", baseMaterial:GetMatrix("$phongtint"))
-            return {
-                material = newMaterial,
-                defaultFlags = baseMaterial:GetInt("$flags"),
-                prevOption = false,
-                name = materialName,
-                props = setDefaultProps(props)
-            }
-        end
-    end
+function IZCMaterialSingleton.createClientMaterial(materialName, props, entIndex)
+	if CLIENT then
+		-- local translucentFlag = 2097152
+		local baseMaterial, _ = Material(materialName)
+		if baseMaterial then
+			local baseFlags = baseMaterial:GetInt("$flags")
+			-- local baseFlags2 = baseMaterial:GetInt("$flags2")
+			local newMaterialName = string.format("%s_IZC_%s", materialName, entIndex)
+			local newMaterial = CreateMaterial(newMaterialName, baseMaterial:GetShader(), baseMaterial:GetKeyValues())
+			copyTexturesTo(newMaterial, baseMaterial)
+			newMaterial:SetInt("$flags", baseFlags)
+			-- newMaterial:SetInt("$flags2", baseFlags2)
+			-- newMaterial:SetMatrix("$phongfresnelranges", baseMaterial:GetMatrix("$phongfresnelranges"))
+			-- newMaterial:SetMatrix("$phongtint", baseMaterial:GetMatrix("$phongtint"))
+			return {
+				material = newMaterial,
+				defaultFlags = baseMaterial:GetInt("$flags"),
+				prevOption = false,
+				name = materialName,
+				props = setDefaultProps(props),
+			}
+		end
+	end
 end
 
-function createServerMaterial(materialName, props)
-    if SERVER then
-        local newMaterial, _ = Material(materialName)
-        if newMaterial then
-            return {
-                name = materialName,
-                props = setDefaultProps(props)
-            }
-        end
-    end
+function IZCMaterialSingleton.createServerMaterial(materialName, props)
+	if SERVER then
+		local newMaterial, _ = Material(materialName)
+		if newMaterial then
+			return {
+				name = materialName,
+				props = setDefaultProps(props),
+			}
+		end
+	end
 end
-return ENTITY_BIT_COUNT
+
+return IZCMaterialSingleton
