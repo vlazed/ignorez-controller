@@ -50,12 +50,7 @@ net.Receive("izc_updateMaterialPropsForEntity", function()
 end)
 
 -- Replicate controlled entities to clients that have connected even after this system has started running
-gameevent.Listen("player_connect")
-hook.Add("player_connect", "izc_playerConnected", function(data)
-	if not data or not data.userid then
-		return
-	end
-	local ply = Player(data.userid)
+net.Receive("izc_requestEntities", function(_, ply)
 	if not IsValid(ply) then
 		return
 	end

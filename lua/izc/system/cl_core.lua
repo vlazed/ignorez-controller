@@ -167,7 +167,15 @@ do
 	end
 end
 
+local systemInitialized = false
+
 timer.Create("izc_system", 0.1, -1, function()
+	if not systemInitialized then
+		net.Start("izc_requestEntities")
+		net.SendToServer()
+		systemInitialized = true
+		return
+	end
 	-- Don't run if we're disabled
 	if not enableSystem then
 		return
