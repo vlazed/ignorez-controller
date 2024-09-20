@@ -16,8 +16,18 @@ local ENTITY_BIT_COUNT = IZCConstants.ENTITY_BIT_COUNT
 local traceLine = util.TraceLine
 local xy_proj = Vector(1, 1, 0)
 
+local enableSystem = CreateClientConVar(
+	"cl_izc_enablesystem",
+	"1",
+	true,
+	false,
+	"Whether the IgnoreZ Controller system should run",
+	0,
+	1
+):GetBool()
+
 local performOcclusion = CreateClientConVar(
-	"izc_performocclusion",
+	"cl_izc_performocclusion",
 	"1",
 	true,
 	false,
@@ -26,20 +36,26 @@ local performOcclusion = CreateClientConVar(
 	1
 ):GetBool()
 
-cvars.AddChangeCallback("izc_performocclusion", function(new)
+cvars.AddChangeCallback("cl_izc_performocclusion", function(new)
 	performOcclusion = tobool(new)
+end)
+
+cvars.AddChangeCallback("cl_izc_enablesystem", function(new)
+	enableSystem = tobool(new)
 end)
 
 ---@type (IZCEntity)[]
 local controlledEntities = {}
 local controlledEntitiesCount = 0
 
+---@param entIndex integer
 local function removeControlledEntity(entIndex)
 	controlledEntities[entIndex] = nil
 	controlledEntitiesCount = controlledEntitiesCount - 1
 	-- print(string.format("Removed %d", entIndex))
 end
 
+---@param entIndex integer
 local function addControlledEntity(entIndex)
 	local entity = ents.GetByIndex(entIndex)
 	if not IsValid(entity) then
@@ -49,9 +65,10 @@ local function addControlledEntity(entIndex)
 	---@cast entity IZCEntity
 	controlledEntities[entIndex] = entity
 	controlledEntitiesCount = controlledEntitiesCount + 1
-	-- print(string.format("Added %d", targetEntityIndex))
 end
 
+---@param bool boolean
+---@return integer
 local function booltonumber(bool)
 	if bool then
 		return 1
@@ -93,7 +110,14 @@ do
 	local VectorDot = VECTOR.Dot
 	local diff = Vector()
 
-	-- https://github.com/noaccessl/gmod-PerformantRender/blob/master/main.lua
+	---https://github.com/noaccessl/gmod-PerformantRender/blob/master/main.lua
+	---@param vecViewOrigin Vector
+	---@param vecViewDirection Vector
+	---@param vecPoint Vector
+	---@param flFOVCosine number
+	---@param min any
+	---@param max any
+	---@return boolean
 	function IsInFOV(vecViewOrigin, vecViewDirection, vecPoint, flFOVCosine, min, max)
 		VectorCopy(diff, vecPoint)
 		VectorSubtract(diff, vecViewOrigin)
@@ -101,6 +125,9 @@ do
 		return VectorDot(vecViewDirection, diff) > flFOVCosine
 	end
 
+	---@param entity Entity
+	---@param start Vector
+	---@return boolean
 	function isEntityOccluded(entity, start)
 		local min, max = entity:GetRotatedAABB(entity:OBBMins(), entity:OBBMaxs())
 		local center = entity:GetPos() + (min + max) / 2
@@ -141,6 +168,11 @@ do
 end
 
 timer.Create("izc_system", 0.1, -1, function()
+	print("Don't run if we're disabled")
+	if not enableSystem then
+		return
+	end
+
 	-- Only run when we have entities
 	if controlledEntitiesCount <= 0 then
 		return
@@ -230,9 +262,11 @@ timer.Create("izc_system", 0.1, -1, function()
 			-- set it directly by 'matInfo.material:SetInt("$ignorez", booltonumber(option))'
 			if bit.band(ignoreZFlag, defaultFlags) == ignoreZFlag then
 				-- The material has $ignorez turned on by default
+				---@diagnostic disable-next-line
 				matInfo.material:SetInt("$flags", defaultFlags - ignoreZFlag * booltonumber(not option))
 			else
 				-- The material has $ignorez turned off by default
+				---@diagnostic disable-next-line
 				matInfo.material:SetInt("$flags", defaultFlags + ignoreZFlag * booltonumber(option))
 			end
 

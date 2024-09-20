@@ -6,16 +6,14 @@ local IZCMaterialSingleton = include("izc/lib/material.lua")
 
 local ENTITY_BIT_COUNT = IZCConstants.ENTITY_BIT_COUNT
 
----@class IZCMaterialInfo
----@field entIndex integer
----@field name string
----@field props IZCProps
-
----@class IZCEntity: Entity
----@field izc_materials {[number]: IZCMaterial}
----@field izc_materialSet {[string]: boolean}
-
 local IZCMaterialUtility = {}
+
+---@param entity IZCEntity
+local function resetMaterialIndicesOf(entity)
+	for index, matInfo in ipairs(entity.izc_materials) do
+		entity.izc_materialSet[matInfo.name] = index
+	end
+end
 
 function IZCMaterialUtility.removeMaterialForEntity()
 	local entIndex = net.ReadUInt(ENTITY_BIT_COUNT)
@@ -29,13 +27,8 @@ function IZCMaterialUtility.removeMaterialForEntity()
 	if not targetEntity.izc_materialSet or not targetEntity.izc_materialSet[materialName] then
 		return
 	end
-	targetEntity.izc_materialSet[materialName] = nil
-	for ind, matInfo in ipairs(targetEntity.izc_materials) do
-		if matInfo.name == materialName then
-			table.remove(targetEntity.izc_materials, ind)
-			break
-		end
-	end
+	local index = targetEntity.izc_materialSet[materialName]
+	table.remove(targetEntity.izc_materials, index)
 
 	-- Revert submaterial
 	for matInd, matName in ipairs(targetEntity:GetMaterials()) do
@@ -45,7 +38,9 @@ function IZCMaterialUtility.removeMaterialForEntity()
 		end
 	end
 
-	-- print(string.format("%s: removed %s", targetEntity:GetModel(), materialName))
+	targetEntity.izc_materialSet[materialName] = nil
+	resetMaterialIndicesOf(targetEntity)
+
 	if SERVER then
 		-- Replicate to all clients
 		net.Start("izc_removeMaterialForEntity")
@@ -72,7 +67,6 @@ function IZCMaterialUtility.addMaterialForEntity()
 		local material
 		if SERVER then
 			material = IZCMaterialSingleton.createServerMaterial(materialInfo.name, materialInfo.props)
-			table.insert(targetEntity.izc_materials, material)
 		else
 			material =
 				IZCMaterialSingleton.createClientMaterial(materialInfo.name, materialInfo.props, materialInfo.entIndex)
@@ -81,9 +75,9 @@ function IZCMaterialUtility.addMaterialForEntity()
 		if not material then
 			error(string.format("%s is not a valid material", materialInfo.name))
 		end
-		table.insert(targetEntity.izc_materials, material)
-		targetEntity.izc_materialSet[materialInfo.name] = true
-		-- print(string.format("%s: added %s", targetEntity:GetModel(), materialInfo.name))
+		local index = table.insert(targetEntity.izc_materials, material)
+		targetEntity.izc_materialSet[materialInfo.name] = index
+
 		if CLIENT then
 			for i, origMat in ipairs(targetEntity:GetMaterials()) do
 				if origMat == materialInfo.name then
@@ -112,11 +106,9 @@ function IZCMaterialUtility.updateMaterialPropsForEntity()
 	local targetEntity = ents.GetByIndex(newMatInfo.entIndex)
 	---@cast targetEntity IZCEntity
 
-	for _, matInfo in ipairs(targetEntity.izc_materials) do
-		if matInfo.name == newMatInfo.name then
-			IZCMaterialSingleton.updateProps(matInfo.props, newMatInfo.props)
-		end
-	end
+	local index = targetEntity.izc_materialSet[newMatInfo.name]
+	local matInfo = targetEntity.izc_materials[index]
+	IZCMaterialSingleton.updateProps(matInfo.props, newMatInfo.props)
 
 	-- print(string.format("%s: updated %s", targetEntity:GetModel(), newMatInfo.name))
 	if SERVER then

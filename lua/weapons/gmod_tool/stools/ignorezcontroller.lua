@@ -9,6 +9,7 @@ TOOL.Category = "Poser"
 TOOL.Name = "#tool.ignorezcontroller.name"
 TOOL.Command = nil
 TOOL.ConfigName = ""
+
 local lastSelectedEntity = nil
 local lastSelectedEntityValid = false
 local id = "izc_entity"
@@ -58,6 +59,9 @@ if SERVER then
 	return
 end
 
+---@param panel DForm
+---@param materials table
+---@return DListView
 local function materialList(panel, materials)
 	local matList = vgui.Create("DListView", panel)
 	matList:SetMultiSelect(false)
@@ -70,8 +74,14 @@ local function materialList(panel, materials)
 	return matList
 end
 
+---@param panel DForm
+---@param entity Entity
+---@return DComboBox
 local function boneComboBox(panel, entity)
+	---@diagnostic disable-next-line
 	local boneBox = panel:ComboBox("Bones")
+	---@cast boneBox DComboBox
+
 	local headIndex
 	for i = 0, entity:GetBoneCount() - 1 do
 		if string.find(entity:GetBoneName(i):lower(), "head") then
@@ -87,14 +97,20 @@ local function boneComboBox(panel, entity)
 	return boneBox
 end
 
+---@param entity IZCEntity
+---@param materialName string
+---@return IZCProps
 local function getMaterialProps(entity, materialName)
-	for _, matInfo in ipairs(entity.izc_materials) do
-		if matInfo.name == materialName then
+	if entity.izc_materialSet[materialName] then
+		local matInfo = entity.izc_materials[entity.izc_materialSet[materialName]]
+		if matInfo and matInfo.props then
 			return matInfo.props
 		end
 	end
 end
 
+---@param panel DForm
+---@param entity IZCEntity
 function TOOL.BuildCPanel(panel, entity)
 	if not IsValid(entity) then
 		panel:Help("No entity selected")
@@ -107,19 +123,28 @@ function TOOL.BuildCPanel(panel, entity)
 	local matList = materialList(panel, materials)
 	matList:Dock(TOP)
 	matList:SizeTo(-1, 500, 0.5)
+	---@diagnostic disable-next-line
 	local controlMaterial = panel:CheckBox("Control material with IgnoreZ Controller?")
+	---@cast controlMaterial DCheckBox
+	---@diagnostic disable-next-line
 	local maxLookAngle = panel:NumSlider("Angle boundary (deg)", "", 0, 180)
+	---@cast maxLookAngle DNumSlider
+	---@diagnostic disable-next-line
 	local inverted = panel:CheckBox("Invert $ignorez parameter?")
+	---@cast maxLookAngle DCheckBox
+	---@diagnostic disable-next-line
 	local useEyeAngle = panel:CheckBox("Use model eye angles?")
+	---@cast useEyeAngle DCheckBox
 	local boneBox = boneComboBox(panel, entity)
 	controlMaterial:SetChecked(false)
+
 	boneBox:Dock(BOTTOM)
 	controlMaterial:Dock(BOTTOM)
 	maxLookAngle:Dock(BOTTOM)
 	inverted:Dock(BOTTOM)
 	useEyeAngle:Dock(BOTTOM)
 
-	matList.OnRowSelected = function(_, rowIndex, row)
+	function matList:OnRowSelected(rowIndex, row)
 		local materialName = row:GetValue(1)
 		if entity.izc_materialSet and entity.izc_materialSet[materialName] then
 			settingProps = true
@@ -171,7 +196,7 @@ function TOOL.BuildCPanel(panel, entity)
 		net.SendToServer()
 	end
 
-	controlMaterial.OnChange = function(_, checked)
+	function controlMaterial:OnChange(checked)
 		if #matList:GetSelected() == 0 then
 			return
 		end
@@ -197,28 +222,28 @@ function TOOL.BuildCPanel(panel, entity)
 		end
 	end
 
-	maxLookAngle.OnValueChanged = function(_, newValue)
+	function maxLookAngle:OnValueChanged(newValue)
 		if settingProps then
 			return
 		end
 		updateMaterialProps()
 	end
 
-	useEyeAngle.OnChecked = function(_, checked)
+	function useEyeAngle:OnChecked(checked)
 		if settingProps then
 			return
 		end
 		updateMaterialProps()
 	end
 
-	inverted.OnChecked = function(_, newValue)
+	function inverted:OnChecked(newValue)
 		if settingProps then
 			return
 		end
 		updateMaterialProps()
 	end
 
-	boneBox.OnSelect = function(_, _, _)
+	function boneBox:OnSelect(_, _)
 		if settingProps then
 			return
 		end
