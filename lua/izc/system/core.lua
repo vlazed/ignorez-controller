@@ -1,5 +1,8 @@
 print("Loading serverside izc system")
 
+---@module "izc.lib.util"
+local IZCUtil = include("izc/lib/util.lua")
+
 ---@module "izc.lib.constants"
 local IZCConstants = include("izc/lib/constants.lua")
 
@@ -9,13 +12,20 @@ local IZCMaterialSingleton = include("izc/lib/material.lua")
 ---@module "izc.lib.shared"
 local IZCMaterialUtil = include("izc/lib/shared.lua")
 
+local ipairs_sparse = IZCUtil.ipairs_sparse
 local izc_hook = "IGNOREZCONTROLLER_HOOK"
 local izc_dupeId = "izcMaterialInfo"
 
 local ENTITY_BIT_COUNT = IZCConstants.ENTITY_BIT_COUNT
 
+---@type (IZCEntity)[]
+local controlledEntities = {}
+
 net.Receive("izc_addEntity", function()
 	local entIndex = net.ReadUInt(ENTITY_BIT_COUNT)
+	local entity = Entity(entIndex)
+	---@cast entity IZCEntity
+	controlledEntities[entIndex] = entity
 	net.Start("izc_addEntity")
 	net.WriteUInt(entIndex, ENTITY_BIT_COUNT)
 	net.Broadcast()
@@ -23,6 +33,7 @@ end)
 
 net.Receive("izc_removeEntity", function()
 	local entIndex = net.ReadUInt(ENTITY_BIT_COUNT)
+	controlledEntities[entIndex] = nil
 	net.Start("izc_removeEntity")
 	net.WriteUInt(entIndex, ENTITY_BIT_COUNT)
 	net.Broadcast()
@@ -36,6 +47,32 @@ net.Receive("izc_removeMaterialForEntity", function()
 end)
 net.Receive("izc_updateMaterialPropsForEntity", function()
 	IZCMaterialUtil.updateMaterialPropsForEntity()
+end)
+
+-- Replicate controlled entities to clients that have connected even after this system has started running
+gameevent.Listen("player_connect")
+hook.Add("player_connect", "izc_playerConnected", function(data)
+	if not data or not data.userid then
+		return
+	end
+	local ply = Player(data.userid)
+	if not IsValid(ply) then
+		return
+	end
+
+	for entIndex, targetEntity in ipairs_sparse(controlledEntities) do
+		net.Start("izc_addEntity")
+		net.WriteUInt(entIndex, ENTITY_BIT_COUNT)
+		net.Send(ply)
+
+		if IsValid(targetEntity) and targetEntity.izc_materials and #targetEntity.izc_materials > 0 then
+			for _, matInfo in ipairs(targetEntity.izc_materials) do
+				net.Start("izc_addMaterialForEntity")
+				IZCMaterialSingleton.writeMaterialInfo(targetEntity:EntIndex(), matInfo.name, matInfo.props)
+				net.Send(ply)
+			end
+		end
+	end
 end)
 
 hook.Add("PostEntityCopy", izc_hook, function(ply, ent, entTable)
