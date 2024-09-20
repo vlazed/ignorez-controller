@@ -144,7 +144,7 @@ function TOOL.BuildCPanel(panel, entity)
 	inverted:Dock(BOTTOM)
 	useEyeAngle:Dock(BOTTOM)
 
-	function matList:OnRowSelected(rowIndex, row)
+	function matList:OnRowSelected(_, row)
 		local materialName = row:GetValue(1)
 		if entity.izc_materialSet and entity.izc_materialSet[materialName] then
 			settingProps = true
@@ -154,6 +154,12 @@ function TOOL.BuildCPanel(panel, entity)
 			inverted:SetChecked(props.inverted)
 			useEyeAngle:SetChecked(props.useEyeAngle)
 			boneBox:ChooseOptionID(props.boneId + 1)
+
+			maxLookAngle:SetEnabled(true)
+			inverted:SetEnabled(true)
+			useEyeAngle:SetEnabled(true)
+			boneBox:SetEnabled(true)
+
 			settingProps = false
 		else
 			settingProps = true
@@ -162,6 +168,11 @@ function TOOL.BuildCPanel(panel, entity)
 			inverted:SetChecked(false)
 			useEyeAngle:SetChecked(true)
 			settingProps = false
+
+			maxLookAngle:SetEnabled(false)
+			inverted:SetEnabled(false)
+			useEyeAngle:SetEnabled(false)
+			boneBox:SetEnabled(false)
 		end
 	end
 
@@ -207,6 +218,11 @@ function TOOL.BuildCPanel(panel, entity)
 				net.SendToServer()
 			end
 
+			maxLookAngle:SetEnabled(true)
+			inverted:SetEnabled(true)
+			useEyeAngle:SetEnabled(true)
+			boneBox:SetEnabled(true)
+
 			addMaterialProps()
 		else
 			local materialName = matList:GetSelected()[1]:GetValue(1)
@@ -219,24 +235,29 @@ function TOOL.BuildCPanel(panel, entity)
 				net.WriteUInt(entity:EntIndex(), ENTITY_BIT_COUNT)
 				net.SendToServer()
 			end
+
+			maxLookAngle:SetEnabled(false)
+			inverted:SetEnabled(false)
+			useEyeAngle:SetEnabled(false)
+			boneBox:SetEnabled(false)
 		end
 	end
 
-	function maxLookAngle:OnValueChanged(newValue)
+	function maxLookAngle:OnValueChanged(_)
 		if settingProps then
 			return
 		end
 		updateMaterialProps()
 	end
 
-	function useEyeAngle:OnChecked(checked)
+	function useEyeAngle:OnChecked(_)
 		if settingProps then
 			return
 		end
 		updateMaterialProps()
 	end
 
-	function inverted:OnChecked(newValue)
+	function inverted:OnChecked(_)
 		if settingProps then
 			return
 		end

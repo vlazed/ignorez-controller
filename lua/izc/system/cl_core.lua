@@ -168,7 +168,7 @@ do
 end
 
 timer.Create("izc_system", 0.1, -1, function()
-	print("Don't run if we're disabled")
+	-- Don't run if we're disabled
 	if not enableSystem then
 		return
 	end
