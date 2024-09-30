@@ -58,7 +58,7 @@ function IZCMaterialUtility.addMaterialForEntity()
 	local targetEntity = ents.GetByIndex(materialInfo.entIndex)
 	---@cast targetEntity IZCEntity
 
-	if not targetEntity.izc_materials then
+	if not targetEntity.izc_materials or not targetEntity.izc_materialSet then
 		targetEntity.izc_materials = {}
 		targetEntity.izc_materialSet = {}
 	end
