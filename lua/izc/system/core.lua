@@ -14,14 +14,12 @@ local IZCMaterialUtil = include("izc/lib/shared.lua")
 
 local ipairs_sparse = IZCUtil.ipairs_sparse
 local izc_hook = "IGNOREZCONTROLLER_HOOK"
+local izc_dupeId = "izcMaterialInfo"
 
 local ENTITY_BIT_COUNT = IZCConstants.ENTITY_BIT_COUNT
 
 ---@type (IZCEntity)[]
 local controlledEntities = {}
-
-
-local izc_dupeId = "izcMaterialInfo"
 
 ---@param ply Player
 ---@param ent IZCEntity
@@ -34,7 +32,7 @@ local function registerIZCEntity(ply, ent, data)
 		net.Start("izc_addEntity")
 		net.WriteUInt(ent:EntIndex(), ENTITY_BIT_COUNT)
 		net.Broadcast()
-		
+
 		for _, matInfo in ipairs(ent.izc_materials) do
 			net.Start("izc_addMaterialForEntity")
 			IZCMaterialSingleton.writeMaterialInfo(ent:EntIndex(), matInfo.name, matInfo.props)
