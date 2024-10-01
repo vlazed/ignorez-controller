@@ -51,7 +51,7 @@ end
 
 -- Stop editing the entity
 function TOOL:RightClick(tr)
-	self:SetControlledEntity(nil)
+	self:SetControlledEntity(NULL)
 	return true
 end
 
@@ -101,12 +101,14 @@ end
 ---@param materialName string
 ---@return IZCProps
 local function getMaterialProps(entity, materialName)
+	local props = {}
 	if entity.izc_materialSet[materialName] then
 		local matInfo = entity.izc_materials[entity.izc_materialSet[materialName]]
 		if matInfo and matInfo.props then
-			return matInfo.props
+			props = matInfo.props
 		end
 	end
+	return props
 end
 
 ---@param panel DForm
@@ -131,7 +133,7 @@ function TOOL.BuildCPanel(panel, entity)
 	---@cast maxLookAngle DNumSlider
 	---@diagnostic disable-next-line
 	local inverted = panel:CheckBox("Invert $ignorez parameter?")
-	---@cast maxLookAngle DCheckBox
+	---@cast inverted DCheckBox
 	---@diagnostic disable-next-line
 	local useEyeAngle = panel:CheckBox("Use model eye angles?")
 	---@cast useEyeAngle DCheckBox
