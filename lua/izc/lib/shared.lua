@@ -15,6 +15,7 @@ local function resetMaterialIndicesOf(entity)
 	end
 end
 
+---@return IZCEntity
 function IZCMaterialUtility.removeMaterialForEntity()
 	local entIndex = net.ReadUInt(ENTITY_BIT_COUNT)
 	local materialName = net.ReadString()
@@ -22,10 +23,10 @@ function IZCMaterialUtility.removeMaterialForEntity()
 	---@cast targetEntity IZCEntity
 
 	if not IsValid(targetEntity) then
-		return
+		return NULL
 	end
 	if not targetEntity.izc_materialSet or not targetEntity.izc_materialSet[materialName] then
-		return
+		return NULL
 	end
 	local index = targetEntity.izc_materialSet[materialName]
 	table.remove(targetEntity.izc_materials, index)
@@ -48,12 +49,15 @@ function IZCMaterialUtility.removeMaterialForEntity()
 		net.WriteString(materialName)
 		net.Broadcast()
 	end
+
+	return targetEntity
 end
 
+---@return IZCEntity
 function IZCMaterialUtility.addMaterialForEntity()
 	local materialInfo = IZCMaterialSingleton.readMaterialInfo()
 	if not materialInfo then
-		return
+		return NULL
 	end
 	local targetEntity = ents.GetByIndex(materialInfo.entIndex)
 	---@cast targetEntity IZCEntity
@@ -96,12 +100,15 @@ function IZCMaterialUtility.addMaterialForEntity()
 			net.Broadcast()
 		end
 	end
+
+	return targetEntity
 end
 
+---@return IZCEntity
 function IZCMaterialUtility.updateMaterialPropsForEntity()
 	local newMatInfo = IZCMaterialSingleton.readMaterialInfo()
 	if not newMatInfo then
-		return
+		return NULL
 	end
 	local targetEntity = ents.GetByIndex(newMatInfo.entIndex)
 	---@cast targetEntity IZCEntity
@@ -118,6 +125,9 @@ function IZCMaterialUtility.updateMaterialPropsForEntity()
 			net.Broadcast()
 		end
 	end
+
+	return targetEntity
 end
+
 
 return IZCMaterialUtility

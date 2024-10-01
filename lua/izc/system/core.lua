@@ -14,12 +14,42 @@ local IZCMaterialUtil = include("izc/lib/shared.lua")
 
 local ipairs_sparse = IZCUtil.ipairs_sparse
 local izc_hook = "IGNOREZCONTROLLER_HOOK"
-local izc_dupeId = "izcMaterialInfo"
 
 local ENTITY_BIT_COUNT = IZCConstants.ENTITY_BIT_COUNT
 
 ---@type (IZCEntity)[]
 local controlledEntities = {}
+
+
+local izc_dupeId = "izcMaterialInfo"
+
+---@param ply Player
+---@param ent IZCEntity
+---@param data any
+local function registerIZCEntity(ply, ent, data)
+	if data.izc_materials and not ent.izc_materials then
+		ent.izc_materialSet = data.izc_materialSet
+		ent.izc_materials = data.izc_materials
+		controlledEntities[ent:EntIndex()] = ent
+		net.Start("izc_addEntity")
+		net.WriteUInt(ent:EntIndex(), ENTITY_BIT_COUNT)
+		net.Broadcast()
+		
+		for _, matInfo in ipairs(ent.izc_materials) do
+			net.Start("izc_addMaterialForEntity")
+			IZCMaterialSingleton.writeMaterialInfo(ent:EntIndex(), matInfo.name, matInfo.props)
+			net.Broadcast()
+		end
+	end
+
+	if ent.izc_materials then
+		duplicator.StoreEntityModifier(ent, izc_dupeId, data)
+	elseif data.izc_materials and #data.izc_materials == 0 then
+		duplicator.ClearEntityModifier(ent, izc_dupeId)
+	end
+end
+
+duplicator.RegisterEntityModifier(izc_dupeId, registerIZCEntity)
 
 net.Receive("izc_addEntity", function()
 	local entIndex = net.ReadUInt(ENTITY_BIT_COUNT)
@@ -39,14 +69,28 @@ net.Receive("izc_removeEntity", function()
 	net.Broadcast()
 end)
 
-net.Receive("izc_addMaterialForEntity", function()
-	IZCMaterialUtil.addMaterialForEntity()
+net.Receive("izc_addMaterialForEntity", function(_, ply)
+	local entity = IZCMaterialUtil.addMaterialForEntity()
+	registerIZCEntity(ply, entity, {
+		izc_materials = entity.izc_materials,
+		izc_materialSet = entity.izc_materialSet,
+	})
 end)
-net.Receive("izc_removeMaterialForEntity", function()
-	IZCMaterialUtil.removeMaterialForEntity()
+
+net.Receive("izc_removeMaterialForEntity", function(_, ply)
+	local entity = IZCMaterialUtil.removeMaterialForEntity()
+	registerIZCEntity(ply, entity, {
+		izc_materials = entity.izc_materials,
+		izc_materialSet = entity.izc_materialSet,
+	})
 end)
-net.Receive("izc_updateMaterialPropsForEntity", function()
-	IZCMaterialUtil.updateMaterialPropsForEntity()
+
+net.Receive("izc_updateMaterialPropsForEntity", function(_, ply)
+	local entity = IZCMaterialUtil.updateMaterialPropsForEntity()
+	registerIZCEntity(ply, entity, {
+		izc_materials = entity.izc_materials,
+		izc_materialSet = entity.izc_materialSet,
+	})
 end)
 
 -- Replicate controlled entities to clients that have connected even after this system has started running
@@ -70,28 +114,6 @@ net.Receive("izc_requestEntities", function(_, ply)
 	end
 end)
 
-hook.Add("PostEntityCopy", izc_hook, function(ply, ent, entTable)
-	if IsValid(ent) and ent.izc_materials then
-		duplicator.StoreEntityModifier(ent:EntIndex(), izc_dupeId, {
-			izc_materials = ent.izc_materials,
-		})
-	end
-end)
-
-hook.Add("PreEntityPaste", izc_hook, function(ply, ent, entTable)
-	if entTable and entTable[izc_dupeId] then
-		ent.izc_materials = entTable[izc_dupeId].izc_materials
-		-- Replicate to all clients
-		net.Start("izc_addEntity")
-		net.Broadcast()
-		for _, matInfo in ipairs(ent.izc_materials) do
-			net.Start("izc_addMaterialForEntity")
-			IZCMaterialSingleton.writeMaterialInfo(ent:EntIndex(), matInfo.name, matInfo.props)
-			net.Broadcast()
-		end
-	end
-end)
-
 hook.Add("EntityRemoved", izc_hook, function(ent)
 	if ent.izc_materials then
 		local entId = ent:EntIndex()
@@ -100,3 +122,4 @@ hook.Add("EntityRemoved", izc_hook, function(ent)
 		net.Broadcast()
 	end
 end)
+
