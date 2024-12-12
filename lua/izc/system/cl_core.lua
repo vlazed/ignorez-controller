@@ -110,7 +110,7 @@ do
 	local VectorDot = VECTOR.Dot
 	local diff = Vector()
 
-	---https://github.com/noaccessl/gmod-PerformantRender/blob/master/main.lua
+	---@source https://github.com/noaccessl/gmod-PerformantRender/blob/master/main.lua
 	---@param vecViewOrigin Vector
 	---@param vecViewDirection Vector
 	---@param vecPoint Vector
@@ -127,9 +127,10 @@ do
 
 	---@param entity Entity
 	---@param start Vector
+	---@param output TraceResult
 	---@return boolean
-	function isEntityOccluded(entity, start)
-		local min, max = entity:GetRotatedAABB(entity:OBBMins(), entity:OBBMaxs())
+	function isEntityOccluded(entity, start, output)
+		local min, max = entity:GetCollisionBounds()
 		local center = entity:GetPos() + (min + max) / 2
 		local cornersVisible = 0
 		local maxVisible = 2
@@ -143,19 +144,14 @@ do
 			if i == 9 then
 				endPos = center
 			end
-			local tr = traceLine({
+			traceLine({
 				start = start,
 				endpos = endPos,
-				filter = function(e)
-					if e == entity or e == LocalPlayer() then
-						return false
-					else
-						return true
-					end
-				end,
+				filter = { entity, LocalPlayer() },
+				output = output,
 			})
 
-			if tr.HitPos == endPos then
+			if output.Fraction == 1 then
 				cornersVisible = cornersVisible + 1
 			end
 			if cornersVisible >= maxVisible then
@@ -168,7 +164,7 @@ do
 end
 
 local systemInitialized = false
-
+local traceResult = {}
 timer.Create("izc_system", 0.1, -1, function()
 	if not systemInitialized then
 		net.Start("izc_requestEntities")
@@ -231,7 +227,7 @@ timer.Create("izc_system", 0.1, -1, function()
 		if not IsInFOV(eyePos, eyeLook, entEyePos, fovCosine) then
 			continue
 		end
-		local occluded = performOcclusion and isEntityOccluded(entity, eyePos)
+		local occluded = performOcclusion and isEntityOccluded(entity, eyePos, traceResult)
 		local lookVector = ((eyePos - entEyePos) * xy_proj):GetNormalized()
 		local angle = deg(acos(lookVector:Dot(entLookVector)))
 
