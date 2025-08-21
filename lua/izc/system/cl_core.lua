@@ -147,7 +147,7 @@ do
 			traceLine({
 				start = start,
 				endpos = endPos,
-				filter = { entity, LocalPlayer() },
+				filter = { entity, LocalPlayer(), LocalPlayer():GetViewEntity() },
 				output = output,
 			})
 
@@ -194,12 +194,17 @@ timer.Create("izc_system", 0.1, -1, function()
 
 	-- Calculate FOV of player
 	local fov = pl:GetFOV()
-	local fovCosine = cos(rad(fov * 0.75))
 
 	if IsValid(viewEntity) then
 		eyePos = viewEntity:EyePos()
 		eyeLook = viewEntity:EyeAngles():Forward()
+		if viewEntity:GetClass() == "hl_camera" then
+			eyePos = viewEntity:LocalToWorld(viewEntity:GetViewOffset())
+			fov = viewEntity:GetFOV()
+		end
 	end
+
+	local fovCosine = cos(rad(fov * 0.75))
 
 	for _, entity in ipairs_sparse(controlledEntities) do
 		if not IsValid(entity) then
@@ -223,8 +228,9 @@ timer.Create("izc_system", 0.1, -1, function()
 		if entity:IsDormant() then
 			continue
 		end
+		local inFOV = IsInFOV(eyePos, eyeLook, entEyePos, fovCosine)
 		-- Filter entities if not in FOV
-		if not IsInFOV(eyePos, eyeLook, entEyePos, fovCosine) then
+		if not inFOV then
 			continue
 		end
 		local occluded = performOcclusion and isEntityOccluded(entity, eyePos, traceResult)
